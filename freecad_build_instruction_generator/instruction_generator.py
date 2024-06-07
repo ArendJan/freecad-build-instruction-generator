@@ -44,15 +44,15 @@ def toggleView():
       Gui.ActiveDocument.ActiveView.getCameraNode().orientation = coin.SbRotation((-0.8310316205024719, -0.22975212335586548, 0.3825218379497528, -0.33208033442497253))
      else:
       Gui.ActiveDocument.ActiveView.getCameraNode().orientation = coin.SbRotation((-0.3320808410644531, 0.3825216293334961, 0.2297523319721222, 0.8310315608978271))
- 
+
      Gui.SendMsgToActiveView("ViewFit")
      #Gui.ActiveDocument.ActiveView.getCameraNode().position = coin.SbVec3f((41.63908767700195, 30.38764190673828, 42.459869384765625))
      topView = not topView
 
      # Save image
-     #toggle_image.Visibility = True 
-     save_image(True) 
-     #toggle_image.Visibility = False 
+     #toggle_image.Visibility = True
+     save_image(True)
+     #toggle_image.Visibility = False
 
 # Import step file and move to correct orientation/location
 # NOTE: Part.read icw Part.show does not include colors of STEP
@@ -138,7 +138,7 @@ class Step:
       activeDoc = App.ActiveDocument
       Gui.Selection.addSelection(activeDoc.Name, self.object.Name)
       if take_screenshot:
-         save_image() 
+         save_image()
 
     def implode_step(self, take_screenshot=True):
       self.object.Placement.move(self.move_vector.negative())
@@ -146,7 +146,7 @@ class Step:
       activeDoc = App.ActiveDocument
       Gui.Selection.addSelection(activeDoc.Name, self.object.Name)
       if take_screenshot:
-         save_image(show_warning=True) 
+         save_image(show_warning=True)
 
 class ParallelSequence:
    def __init__(self, sequence):
@@ -236,15 +236,15 @@ class AssemblyProject:
       Gui.ActiveDocument.ActiveView.getCameraNode().orientation = coin.SbRotation((-0.8310316205024719, -0.22975212335586548, 0.3825218379497528, -0.33208033442497253))
      else:
       Gui.ActiveDocument.ActiveView.getCameraNode().orientation = coin.SbRotation((-0.3320808410644531, 0.3825216293334961, 0.2297523319721222, 0.8310315608978271))
- 
+
      Gui.SendMsgToActiveView("ViewFit")
      #Gui.ActiveDocument.ActiveView.getCameraNode().position = coin.SbVec3f((41.63908767700195, 30.38764190673828, 42.459869384765625))
      self.topView = not self.topView
 
      # Save image
-     #toggle_image.Visibility = True 
-     save_image(True) 
-     #toggle_image.Visibility = False 
+     #toggle_image.Visibility = True
+     save_image(True)
+     #toggle_image.Visibility = False
 
     ## Export STEP of this assembly
     def export(self):
