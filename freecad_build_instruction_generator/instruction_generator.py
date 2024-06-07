@@ -119,7 +119,16 @@ def save_image_new_parts():
   step_id += 1
   image_id = 0
 
-
+def drawLine(begin, end):
+    App.ActiveDocument.addObject("Part::Line","Line")
+    App.ActiveDocument.Line.X1=begin[0]
+    App.ActiveDocument.Line.Y1=begin[1]
+    App.ActiveDocument.Line.Z1=begin[2]
+    App.ActiveDocument.Line.X2=end[0]
+    App.ActiveDocument.Line.Y2=end[1]
+    App.ActiveDocument.Line.Z2=end[2]
+    App.ActiveDocument.Line.Placement=App.Placement(App.Vector(0.00,0.00,0.00),App.Rotation(App.Vector(0.00,0.00,1.00),0.00))
+    App.ActiveDocument.Line.Label='Line'
 
 class Step:
     def __init__(self, object, move_vector, rotate_vector=App.Vector(0,0,0), rotate_angle=0):

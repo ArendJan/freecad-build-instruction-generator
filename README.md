@@ -14,3 +14,17 @@ Open FreeCAD and the Python console (View > Panels > Python console). In the pyt
 To check if this is installed correctly. The following should work:
 
 > from freecad_build_instruction_generator import instruction_generator as gen
+
+
+Creating Instructions
+=====================
+
+TODO
+
+Developing this Module
+======================
+
+When developing this module you need to reload the module in FreeCAD after re-installation:
+
+> import importlib
+> importlib.reload(gen)
