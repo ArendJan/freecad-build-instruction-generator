@@ -1,8 +1,19 @@
 ## Works in FreeCAD 0.21.2
 ## We do need a GUI though to run this: https://wiki.freecadweb.org/Headless%20FreeCAD
 
+## When changing this file, you need to reinstall it:
+# > import subprocess
+# > import sys
+# > import os
+# > from pathlib import Path
+# > os.chdir(path to_this_repo)
+# > py = str((Path(sys.executable) / "../python").resolve())
+# > subprocess.check_call([py, "-m", "pip", "install", "."])
+
+
 import FreeCAD as App
 import FreeCADGui as Gui
+from PySide import QtCore,QtGui
 import ImportGui
 import Import
 import Part
@@ -10,6 +21,7 @@ import time
 import os
 from PIL import Image
 from pivy import coin
+from pathlib import Path
 
 Gui.runCommand('Std_CloseAllWindows',0)
 
@@ -19,63 +31,51 @@ image_id = 0
 step_id = 0
 parts_in_assembly_step = []
 warning = ""
-#topView = True
-#doc = FreeCAD.newDocument("Mirte_Assembly")
-#FreeCAD.setActiveDocument(doc.Name)
 
-SOURCE_PATH = ""
+CWD_PATH = ""
+SOURCES_PATH = {}
+WARNING_PATH = ""
+MIRTE = ""
 
-def setSource(path):
-   global SOURCE_PATH
-   SOURCE_PATH = path
-   for f in os.listdir(SOURCE_PATH + 'build'):
-     os.remove(os.path.join(SOURCE_PATH + 'build', f))
+def setMIRTEVersion(name):
+   global MIRTE
+   MIRTE = name
+
+   # clear or generate build path
+   build_path = (CWD_PATH / "build")
+   if not build_path.exists():
+     os.mkdir(build_path)
+
+   build_path = (CWD_PATH / "build" / MIRTE)
+   if build_path.exists():
+     for f in os.listdir(build_path.resolve()):
+       os.remove(os.path.join(build_path.resolve(), f))
+   else:
+     os.mkdir(build_path)
+   SOURCES_PATH["build"] = build_path
+
+def addSourcesPath(name, path):
+   global SOURCES_PATH
+   SOURCES_PATH[name] = Path(path)
+   print("Added sources: " + path)
+
+def setCwdPath(path):
+   global CWD_PATH
+   print("CWD path: " + path)
+   CWD_PATH = Path(path)
+
+def setWarningPath(path):
+   global WARNING_PATH
+   WARNING_PATH = Path(path)
 
 def refreshFix():
-   Gui.runCommand('Std_OrthographicCamera',0)
-   Gui.runCommand('Std_PerspectiveCamera',1)
-   Gui.runCommand('Std_OrthographicCamera',1)
-   Gui.runCommand('Std_PerspectiveCamera',0)
-
-def toggleView():
-     global topView
-
-     if topView:
-      Gui.ActiveDocument.ActiveView.getCameraNode().orientation = coin.SbRotation((-0.8310316205024719, -0.22975212335586548, 0.3825218379497528, -0.33208033442497253))
-     else:
-      Gui.ActiveDocument.ActiveView.getCameraNode().orientation = coin.SbRotation((-0.3320808410644531, 0.3825216293334961, 0.2297523319721222, 0.8310315608978271))
-
-     Gui.SendMsgToActiveView("ViewFit")
-     #Gui.ActiveDocument.ActiveView.getCameraNode().position = coin.SbVec3f((41.63908767700195, 30.38764190673828, 42.459869384765625))
-     topView = not topView
-
-     # Save image
-     #toggle_image.Visibility = True
-     save_image(True)
-     #toggle_image.Visibility = False
-
-# Import step file and move to correct orientation/location
-# NOTE: Part.read icw Part.show does not include colors of STEP
-# NOTE: Nor does Import.insert()
-def import_object(file, position=App.Vector(0,0,0), rotation=App.Rotation(0,0,0)):
-  # get current lsit of objects
-  old_object_list = App.ActiveDocument.Objects
-  ImportGui.insert(SOURCE_PATH + 'mirte-cad-hamburger\\' + file, "Mirte_Assembly")
-
-  # Get the refecnde to the latest import object
-  new_object_list = App.ActiveDocument.Objects
-  new_items = [part for part in new_object_list if part not in old_object_list]
-  for item in new_items:
-     if not item.Parents:
-        item.Placement=App.Placement(position, rotation, App.Vector(0,0,0))
-        #item.ViewObject.DisplayMode = 1
-        parts_in_assembly_step.append(item)
-        return item
-
+   # Refresh QT and wait to avaoid black screenshots
+   QtGui.QApplication.processEvents()
+   time.sleep(0.5)
 
 def add_foreground(bg_filename, fg_filename):
    background = Image.open(bg_filename)
-   foreground = Image.open(SOURCE_PATH + fg_filename)
+   foreground = Image.open(fg_filename)
    foreground = foreground.convert("RGBA")
    background.paste(foreground, (0, 0), foreground)
    background.save(bg_filename, format="png")
@@ -84,40 +84,17 @@ def add_foreground(bg_filename, fg_filename):
 def save_image(toggled = False, part_id = -1, show_warning=False):
  global image_id, warning
  refreshFix()
- input("Press Enter") # for some reason I need this?
  text = str(step_id) + ("_part" + str(part_id) if part_id > -1 else "_step" + str(image_id))
- filename = SOURCE_PATH + 'build\\' + text + '.png'
+ filename = str((CWD_PATH / 'build' / MIRTE / (text + '.png')).resolve())
  Gui.activeDocument().activeView().saveImage(filename,4000,4000,'#00ffffff')
  if (toggled):
-   add_foreground(filename, "mirte-rotate.png")
+   add_foreground(filename, WARNING_PATH / "mirte-rotate.png")
  if (warning and show_warning):
-   add_foreground(filename, warning + "warning.png")
+   add_foreground(filename, WARNING_PATH / (warning + "warning.png"))
    warning = ""
 
  Gui.Selection.clearSelection()
  image_id += 1
-
-
-def save_image_new_parts():
-  global parts_in_assembly_step, step_id, image_id
-
-  if including_parts:
-    part_id = 0
-    for part in parts_in_assembly_step:
-      part_doc = App.newDocument("Part")
-      App.setActiveDocument(part_doc.Name)
-      App.getDocument('Part').copyObject(App.getDocument('Mirte_Assembly').getObject(part.Name), True)
-      obj = App.getDocument('Part').getObject(part.Name)
-      Gui.ActiveDocument.ActiveView.getCameraNode().orientation = coin.SbRotation((-0.3320808410644531, 0.3825216293334961, 0.2297523319721222, 0.8310315608978271))
-      Gui.SendMsgToActiveView("ViewFit")
-      save_image(part_id = part_id)
-      part_id += 1
-      App.setActiveDocument(doc.Name)
-      App.closeDocument("Part")
-
-    parts_in_assembly_step.clear()
-  step_id += 1
-  image_id = 0
 
 def drawLine(begin, end):
     App.ActiveDocument.addObject("Part::Line","Line")
@@ -219,10 +196,11 @@ class AssemblyProject:
     # Import step file and move to correct orientation/location
     # NOTE: Part.read icw Part.show does not include colors of STEP
     # NOTE: Nor does Import.insert()
-    def import_object(self, file, position=App.Vector(0,0,0), rotation=App.Rotation(0,0,0)):
+    def import_object(self, sourceName, file, position=App.Vector(0,0,0), rotation=App.Rotation(0,0,0)):
       # get current lsit of objects
       old_object_list = App.ActiveDocument.Objects
-      ImportGui.insert(SOURCE_PATH + 'mirte-cad-hamburger\\' + file, self.project_name)
+      file_path = str( (SOURCES_PATH[sourceName] / file).resolve() )
+      ImportGui.insert(file_path, self.project_name)
 
       # Get the refecnde to the latest import object
       new_object_list = App.ActiveDocument.Objects
@@ -255,10 +233,12 @@ class AssemblyProject:
      save_image(True)
      #toggle_image.Visibility = False
 
-    ## Export STEP of this assembly
-    def export(self):
-        objects = self.doc.RootObjects
-        ImportGui.export(objects,SOURCE_PATH + "build\\" + self.project_name + ".step")
+    ## Close the document, and optionally save step-file
+    def close(self, export=False):
+        if export:
+            objects = self.doc.RootObjects
+            ImportGui.export(objects, str(CWD_PATH / "build" / MIRTE / (self.project_name + ".step")))
+        App.closeDocument(self.doc.Name)
 
     def addWarning(self, type):
         global warning
@@ -269,10 +249,8 @@ class AssemblyProject:
 
     def save_image_new_parts(self):
       global step_id, image_id, warning
-      print("hier")
       if self.including_parts:
         part_id = 0
-        print("en hier")
         for part in self.parts_in_assembly_step:
           part_doc = App.newDocument("Part")
           App.setActiveDocument(part_doc.Name)
