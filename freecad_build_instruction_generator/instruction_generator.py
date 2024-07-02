@@ -203,6 +203,7 @@ class AssemblyProject:
       # get current lsit of objects
       old_object_list = App.ActiveDocument.Objects
       file_path = str( (SOURCES_PATH[sourceName] / file).resolve() )
+      print("Importing: " + file_path)
       ImportGui.insert(file_path, self.project_name)
 
       # Get the refecnde to the latest import object
