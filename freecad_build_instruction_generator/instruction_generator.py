@@ -86,6 +86,9 @@ def save_image(toggled = False, part_id = -1, show_warning=False):
  refreshFix()
  text = str(step_id) + ("_part" + str(part_id) if part_id > -1 else "_step" + str(image_id))
  filename = str((CWD_PATH / 'build' / MIRTE / (text + '.png')).resolve())
+ # create dir if not exists
+ Path(os.path.dirname(filename)).mkdir(parents=True, exist_ok=True)
+ print("Saving image: " + filename)
  Gui.activeDocument().activeView().saveImage(filename,4000,4000,'#00ffffff')
  if (toggled):
    add_foreground(filename, WARNING_PATH / "mirte-rotate.png")
